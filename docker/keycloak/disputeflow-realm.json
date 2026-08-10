@@ -1,0 +1,41 @@
+{
+  "realm": "disputeflow",
+  "enabled": true,
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "customer" },
+      { "name": "ops_agent" },
+      { "name": "admin" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "disputeflow-cli",
+      "name": "DisputeFlow local client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:*"],
+      "webOrigins": ["*"]
+    }
+  ],
+  "users": [
+    {
+      "username": "customer1",
+      "enabled": true,
+      "email": "customer1@example.com",
+      "credentials": [{ "type": "password", "value": "customer-pass", "temporary": false }],
+      "realmRoles": ["customer"]
+    },
+    {
+      "username": "agent1",
+      "enabled": true,
+      "email": "agent1@example.com",
+      "credentials": [{ "type": "password", "value": "agent-pass", "temporary": false }],
+      "realmRoles": ["ops_agent"]
+    }
+  ]
+}
+

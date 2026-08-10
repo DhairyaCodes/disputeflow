@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-disputeflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-disputeflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.4
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/keycloak/disputeflow-realm.json:/opt/keycloak/data/import/disputeflow-realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  gcs:
+    image: fsouza/fake-gcs-server:1.52.2
+    command: -scheme http -port 4443 -public-host localhost:4443
+    ports:
+      - "4443:4443"
+    volumes:
+      - gcs-data:/data
+
+  dispute-service:
+    build:
+      context: .
+      dockerfile: services/dispute-service/Dockerfile
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-disputeflow}:${POSTGRES_PASSWORD:-local-password}@postgres:5432/dispute_service
+      OIDC_ISSUER: http://localhost:8080/realms/disputeflow
+      OIDC_JWKS_URI: http://keycloak:8080/realms/disputeflow/protocol/openid-connect/certs
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  evidence-service:
+    build:
+      context: .
+      dockerfile: services/evidence-service/Dockerfile
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://${POSTGRES_USER:-disputeflow}:${POSTGRES_PASSWORD:-local-password}@postgres:5432/evidence_service
+      OIDC_ISSUER: http://localhost:8080/realms/disputeflow
+      OIDC_JWKS_URI: http://keycloak:8080/realms/disputeflow/protocol/openid-connect/certs
+      DISPUTE_SERVICE_URL: http://dispute-service:3001
+      GCS_BUCKET: ${GCS_BUCKET:-disputeflow-evidence-local}
+      STORAGE_EMULATOR_HOST: http://gcs:4443
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gcs:
+        condition: service_started
+      dispute-service:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  gcs-data:

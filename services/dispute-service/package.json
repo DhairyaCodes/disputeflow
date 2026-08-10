@@ -1,0 +1,27 @@
+{
+  "name": "@disputeflow/dispute-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jose": "^6.0.11",
+    "pg": "^8.16.0",
+    "pino": "^9.7.0",
+    "pino-http": "^10.4.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "supertest": "^7.1.1"
+  }
+}
+

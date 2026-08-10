@@ -1,0 +1,19 @@
+{
+  "name": "disputeflow-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud-native transaction dispute and evidence management platform",
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "start:disputes": "npm start --workspace services/dispute-service",
+    "start:evidence": "npm start --workspace services/evidence-service",
+    "test": "npm test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+
