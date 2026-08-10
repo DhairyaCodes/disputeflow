@@ -69,3 +69,31 @@ npm audit --omit=dev
 ```
 
 GitHub Actions runs the same checks and builds both containers. Successful changes on `main` publish versioned images to GitHub Container Registry.
+
+## Analytics pipeline
+
+The batch ETL job reads the operational dispute database, pseudonymizes customer and transaction identifiers, and produces a BigQuery star schema:
+
+```text
+dim_date              dim_dispute_reason              dim_merchant
+    \                         |                            /
+                       fact_disputes
+                              |
+                  fact_status_transitions
+```
+
+Export and inspect the transformed newline-delimited JSON without cloud credentials:
+
+```bash
+npm run etl:export
+```
+
+To load the tables into a BigQuery Sandbox dataset, authenticate with Application Default Credentials and set the project ID:
+
+```powershell
+gcloud auth application-default login
+$env:GCP_PROJECT_ID='your-sandbox-project'
+npm run etl:load
+```
+
+The loader creates `disputeflow_analytics` in `asia-south1` and replaces each table in a batch, making reruns deterministic. Example analytical queries are in [`analytics/queries.sql`](analytics/queries.sql).
