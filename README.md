@@ -16,7 +16,7 @@ The Evidence Service verifies access by calling the Dispute Service over REST. I
 Requirements: Docker Desktop and Docker Compose.
 
 ```bash
-docker compose up --build -d
+docker compose up --build -d --wait
 npm run smoke
 ```
 
