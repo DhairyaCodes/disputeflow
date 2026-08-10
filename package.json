@@ -11,7 +11,8 @@
     "start:disputes": "npm start --workspace services/dispute-service",
     "start:evidence": "npm start --workspace services/evidence-service",
     "test": "npm test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "smoke": "node scripts/smoke-test.mjs"
   },
   "engines": {
     "node": ">=22"
