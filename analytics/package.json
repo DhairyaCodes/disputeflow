@@ -1,0 +1,17 @@
+{
+  "name": "@disputeflow/analytics",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "node src/run.js --export-only",
+    "load": "node src/run.js",
+    "test": "node --test",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^8.1.1",
+    "pg": "^8.16.0",
+    "zod": "^3.25.0"
+  }
+}

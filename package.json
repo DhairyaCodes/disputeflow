@@ -5,14 +5,17 @@
   "type": "module",
   "description": "Cloud-native transaction dispute and evidence management platform",
   "workspaces": [
-    "services/*"
+    "services/*",
+    "analytics"
   ],
   "scripts": {
     "start:disputes": "npm start --workspace services/dispute-service",
     "start:evidence": "npm start --workspace services/evidence-service",
     "test": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "etl:export": "npm run export --workspace analytics",
+    "etl:load": "npm run load --workspace analytics"
   },
   "engines": {
     "node": ">=22"

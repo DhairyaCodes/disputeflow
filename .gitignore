@@ -6,6 +6,6 @@ coverage/
 dist/
 tmp/
 *.log
+analytics/output/
 .idea/
 .vscode/
-

@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY services/dispute-service/package.json services/dispute-service/package.json
 COPY services/evidence-service/package.json services/evidence-service/package.json
+COPY analytics/package.json analytics/package.json
 RUN npm ci --omit=dev --workspace services/evidence-service
 
 FROM node:22-alpine
@@ -14,4 +15,3 @@ COPY --chown=node:node services/evidence-service ./services/evidence-service
 WORKDIR /app/services/evidence-service
 EXPOSE 3002
 CMD ["node", "src/server.js"]
-
