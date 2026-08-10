@@ -1,0 +1,384 @@
+openapi: 3.1.0
+info:
+  title: DisputeFlow API
+  version: 1.0.0
+  description: REST APIs for transaction disputes and supporting evidence.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:3001
+    description: Dispute Service
+  - url: http://localhost:3002
+    description: Evidence Service
+tags:
+  - name: Disputes
+    description: Customer dispute lifecycle and operations review.
+  - name: Evidence
+    description: Supporting document storage and retrieval.
+paths:
+  /api/v1/disputes:
+    post:
+      tags: [Disputes]
+      summary: Create a dispute
+      operationId: createDispute
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDispute'
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Disputes]
+      summary: List disputes visible to the caller
+      operationId: listDisputes
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/DisputeStatus'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated disputes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dispute'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/disputes/{disputeId}:
+    get:
+      tags: [Disputes]
+      summary: Get a dispute
+      operationId: getDispute
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: Dispute details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/disputes/{disputeId}/history:
+    get:
+      tags: [Disputes]
+      summary: Get dispute status history
+      operationId: getDisputeHistory
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: Ordered status changes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatusHistory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/disputes/{disputeId}/status:
+    patch:
+      tags: [Disputes]
+      summary: Change dispute status
+      operationId: updateDisputeStatus
+      description: Requires the `ops_agent` or `admin` role.
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, expectedVersion]
+              properties:
+                status:
+                  $ref: '#/components/schemas/DisputeStatus'
+                expectedVersion:
+                  type: integer
+                  minimum: 1
+                note:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Updated dispute
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          description: Invalid status transition
+  /api/v1/disputes/{disputeId}/evidence:
+    post:
+      tags: [Evidence]
+      summary: Upload supporting evidence
+      operationId: uploadEvidence
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Evidence stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidence'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Evidence]
+      summary: List evidence metadata
+      operationId: listEvidence
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: Evidence attached to the dispute
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Evidence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/evidence/{evidenceId}/content:
+    get:
+      tags: [Evidence]
+      summary: Download evidence content
+      operationId: downloadEvidence
+      parameters:
+        - $ref: '#/components/parameters/EvidenceId'
+      responses:
+        '200':
+          description: Original evidence file
+          headers:
+            X-Content-Checksum-Sha256:
+              schema:
+                type: string
+          content:
+            application/pdf: {}
+            image/jpeg: {}
+            image/png: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/evidence/{evidenceId}:
+    delete:
+      tags: [Evidence]
+      summary: Delete evidence from an open dispute
+      operationId: deleteEvidence
+      parameters:
+        - $ref: '#/components/parameters/EvidenceId'
+      responses:
+        '204':
+          description: Evidence deleted
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    DisputeId:
+      in: path
+      name: disputeId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EvidenceId:
+      in: path
+      name: evidenceId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CreateDispute:
+      type: object
+      required: [transactionReference, amount, currency, merchantName, reason]
+      properties:
+        transactionReference:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        merchantName:
+          type: string
+        reason:
+          type: string
+          enum: [CARD_NOT_PRESENT, DUPLICATE_CHARGE, PRODUCT_NOT_RECEIVED, INCORRECT_AMOUNT, OTHER]
+        description:
+          type: string
+          maxLength: 1000
+    Dispute:
+      allOf:
+        - $ref: '#/components/schemas/CreateDispute'
+        - type: object
+          required: [id, customerId, status, version, createdAt, updatedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            customerId:
+              type: string
+            status:
+              $ref: '#/components/schemas/DisputeStatus'
+            version:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    DisputeStatus:
+      type: string
+      enum: [OPEN, AWAITING_EVIDENCE, UNDER_REVIEW, RESOLVED, REJECTED]
+    StatusHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromStatus:
+          oneOf:
+            - $ref: '#/components/schemas/DisputeStatus'
+            - type: 'null'
+        toStatus:
+          $ref: '#/components/schemas/DisputeStatus'
+        changedBy:
+          type: string
+        note:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+    Evidence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        disputeId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        contentType:
+          type: string
+        sizeBytes:
+          type: integer
+        checksum:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Request conflicts with current state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+security:
+  - bearerAuth: []

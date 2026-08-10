@@ -11,6 +11,8 @@ The project runs entirely on a developer machine. Keycloak provides OAuth 2.0/Op
 
 The Evidence Service verifies access by calling the Dispute Service over REST. It never reads the other service's database.
 
+The complete API contract is available in [`openapi.yaml`](openapi.yaml) and can be imported into Postman or Swagger Editor.
+
 ## Run locally
 
 Requirements: Docker Desktop and Docker Compose.
@@ -51,6 +53,7 @@ PATCH  /api/v1/disputes/:id/status
 
 POST   /api/v1/disputes/:id/evidence
 GET    /api/v1/disputes/:id/evidence
+GET    /api/v1/evidence/:id/content
 DELETE /api/v1/evidence/:id
 ```
 
