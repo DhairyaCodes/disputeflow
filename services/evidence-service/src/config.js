@@ -7,10 +7,11 @@ const schema = z.object({
   OIDC_JWKS_URI: z.string().url().optional(),
   DISPUTE_SERVICE_URL: z.string().url(),
   GCS_BUCKET: z.string().min(3),
+  GCP_PROJECT_ID: z.string().min(2).default('local-disputeflow'),
+  GCS_API_ENDPOINT: z.string().url().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development')
 });
 
 export function loadConfig(environment = process.env) {
   return schema.parse(environment);
 }
-

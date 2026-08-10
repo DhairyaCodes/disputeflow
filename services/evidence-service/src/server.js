@@ -10,7 +10,7 @@ import { createObjectStorage } from './storage.js';
 const config = loadConfig();
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 const pool = createDatabase(config.DATABASE_URL);
-const objectStorage = createObjectStorage(config.GCS_BUCKET);
+const objectStorage = createObjectStorage(config.GCS_BUCKET, config.GCP_PROJECT_ID, config.GCS_API_ENDPOINT);
 
 await migrate(pool);
 await objectStorage.ensureBucket();

@@ -7,7 +7,7 @@ export function createDatabase(connectionString) {
     connectionString,
     max: 10,
     idleTimeoutMillis: 30_000,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
   });
 }
 
@@ -55,4 +55,3 @@ export async function migrate(pool) {
       ON dispute_status_history(dispute_id, created_at);
   `);
 }
-

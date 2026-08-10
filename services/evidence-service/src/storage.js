@@ -1,7 +1,10 @@
 import { Storage } from '@google-cloud/storage';
 
-export function createObjectStorage(bucketName) {
-  const storage = new Storage();
+export function createObjectStorage(bucketName, projectId, apiEndpoint) {
+  const storage = new Storage({
+    projectId,
+    ...(apiEndpoint ? { apiEndpoint } : {})
+  });
   const bucket = storage.bucket(bucketName);
 
   return {
@@ -21,4 +24,3 @@ export function createObjectStorage(bucketName) {
     }
   };
 }
-

@@ -26,6 +26,10 @@
       "username": "customer1",
       "enabled": true,
       "email": "customer1@example.com",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Customer",
+      "requiredActions": [],
       "credentials": [{ "type": "password", "value": "customer-pass", "temporary": false }],
       "realmRoles": ["customer"]
     },
@@ -33,9 +37,12 @@
       "username": "agent1",
       "enabled": true,
       "email": "agent1@example.com",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Agent",
+      "requiredActions": [],
       "credentials": [{ "type": "password", "value": "agent-pass", "temporary": false }],
       "realmRoles": ["ops_agent"]
     }
   ]
 }
-

@@ -67,7 +67,8 @@ services:
       OIDC_JWKS_URI: http://keycloak:8080/realms/disputeflow/protocol/openid-connect/certs
       DISPUTE_SERVICE_URL: http://dispute-service:3001
       GCS_BUCKET: ${GCS_BUCKET:-disputeflow-evidence-local}
-      STORAGE_EMULATOR_HOST: http://gcs:4443
+      GCP_PROJECT_ID: local-disputeflow
+      GCS_API_ENDPOINT: http://gcs:4443
     ports:
       - "3002:3002"
     depends_on:
