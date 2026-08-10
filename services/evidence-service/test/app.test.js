@@ -9,8 +9,10 @@ const evidence = {
   id: '4e279e78-a6a5-4c60-a675-0e56ce7b48f0',
   disputeId,
   filename: 'receipt.pdf',
+  objectName: `disputes/${disputeId}/receipt.pdf`,
   contentType: 'application/pdf',
-  sizeBytes: 20
+  sizeBytes: 20,
+  checksum: 'b7cd2de95d436d7765a1c5f9226498e519b8a2e6e8bf7fc50dfd887ed4a5d499'
 };
 
 function buildApp({ dispute = { id: disputeId, status: 'OPEN' } } = {}) {
@@ -20,7 +22,11 @@ function buildApp({ dispute = { id: disputeId, status: 'OPEN' } } = {}) {
     findById: async () => evidence,
     remove: async () => {}
   };
-  const objectStorage = { upload: async () => {}, remove: async () => {} };
+  const objectStorage = {
+    upload: async () => {},
+    download: async () => Buffer.from('%PDF-1.4 example'),
+    remove: async () => {}
+  };
   const disputeClient = { getDispute: async () => dispute };
   const authenticate = (req, _res, next) => {
     req.user = { id: 'customer-1', roles: ['customer'] };
@@ -58,5 +64,12 @@ describe('Evidence Service API', () => {
       .attach('file', Buffer.from('%PDF-1.4 example'), { filename: 'receipt.pdf', contentType: 'application/pdf' });
     assert.equal(response.status, 409);
     assert.equal(response.body.error.code, 'DISPUTE_CLOSED');
+  });
+
+  it('downloads evidence after verifying dispute access', async () => {
+    const response = await request(buildApp()).get(`/api/v1/evidence/${evidence.id}/content`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['content-type'], 'application/pdf');
+    assert.match(response.headers['content-disposition'], /receipt\.pdf/);
   });
 });

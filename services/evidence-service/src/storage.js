@@ -19,6 +19,10 @@ export function createObjectStorage(bucketName, projectId, apiEndpoint) {
         metadata: { metadata }
       });
     },
+    async download(objectName) {
+      const [contents] = await bucket.file(objectName).download();
+      return contents;
+    },
     async remove(objectName) {
       await bucket.file(objectName).delete({ ignoreNotFound: true });
     }

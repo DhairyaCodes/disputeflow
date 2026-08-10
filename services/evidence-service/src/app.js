@@ -81,6 +81,20 @@ export function createApp({ repository, objectStorage, disputeClient, authentica
     return res.json({ items: await repository.list(req.params.disputeId) });
   }));
 
+  app.get('/api/v1/evidence/:id/content', asyncRoute(async (req, res) => {
+    const evidence = await repository.findById(req.params.id);
+    if (!evidence) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
+    const dispute = await disputeClient.getDispute(evidence.disputeId, req.accessToken);
+    if (!dispute) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Dispute not found' } });
+    const contents = await objectStorage.download(evidence.objectName);
+    const safeFilename = evidence.filename.replace(/["\\\r\n]/g, '_');
+    res.setHeader('content-type', evidence.contentType);
+    res.setHeader('content-length', contents.length);
+    res.setHeader('content-disposition', `attachment; filename="${safeFilename}"`);
+    res.setHeader('x-content-checksum-sha256', evidence.checksum);
+    return res.send(contents);
+  }));
+
   app.delete('/api/v1/evidence/:id', asyncRoute(async (req, res) => {
     const evidence = await repository.findById(req.params.id);
     if (!evidence) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
@@ -109,4 +123,3 @@ export function createApp({ repository, objectStorage, disputeClient, authentica
   });
   return app;
 }
-

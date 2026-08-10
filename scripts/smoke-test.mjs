@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const identityUrl = process.env.IDENTITY_URL || 'http://localhost:8080';
@@ -73,6 +73,13 @@ const uploadResponse = await fetch(`${evidenceUrl}/api/v1/disputes/${created.bod
 });
 if (!uploadResponse.ok) throw new Error(`Evidence upload failed: ${uploadResponse.status} ${await uploadResponse.text()}`);
 const evidence = await uploadResponse.json();
+const downloadResponse = await fetch(`${evidenceUrl}/api/v1/evidence/${evidence.id}/content`, {
+  headers: { authorization: `Bearer ${customerToken}` }
+});
+if (!downloadResponse.ok) throw new Error(`Evidence download failed: ${downloadResponse.status}`);
+const downloadedEvidence = Buffer.from(await downloadResponse.arrayBuffer());
+const downloadedChecksum = createHash('sha256').update(downloadedEvidence).digest('hex');
+if (downloadedChecksum !== evidence.checksum) throw new Error('Downloaded evidence checksum does not match the upload');
 
 const updated = await jsonRequest(`${disputeUrl}/api/v1/disputes/${created.body.id}/status`, {
   method: 'PATCH',
@@ -86,6 +93,6 @@ console.log(JSON.stringify({
   evidenceId: evidence.id,
   status: updated.body.status,
   historyEntries: history.body.items.length,
-  idempotencyVerified: true
+  idempotencyVerified: true,
+  evidenceChecksumVerified: true
 }, null, 2));
-
